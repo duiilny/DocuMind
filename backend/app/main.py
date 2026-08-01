@@ -2,7 +2,10 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
-from backend.app.services.document_service import extract_text_from_pdf
+from backend.app.services.document_processor import (
+    extract_text_from_pdf,
+    chunk_text,
+)
 
 
 app = FastAPI(
@@ -50,12 +53,14 @@ async def upload_document(file: UploadFile = File(...)):
         file_path.write_bytes(content)
 
         text = extract_text_from_pdf(str(file_path))
+        chunks = chunk_text(text)
 
         return {
             "filename": file.filename,
             "pages": "processed",
             "characters": len(text),
-            "text": text,
+            "chunks": len(chunks),
+            "chunk_preview": chunks[:2],
         }
 
     except Exception as exc:
